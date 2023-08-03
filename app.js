@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 
 const mongoose = require("mongoose");
 
@@ -17,5 +18,8 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(routes);
+app.use(cors());
 
 app.listen(PORT);
+
+app.use(cors());
