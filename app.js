@@ -21,5 +21,3 @@ app.use(routes);
 app.use(cors());
 
 app.listen(PORT);
-
-app.use(cors());
