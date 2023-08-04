@@ -73,8 +73,6 @@ const login = (req, res) => {
       });
     })
     .catch((err) => {
-      console.log(err);
-      console.log(err.name);
       handleCatchError(err, res);
     });
 };
