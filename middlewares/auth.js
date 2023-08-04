@@ -27,6 +27,6 @@ module.exports = (req, res, next) => {
     req.user = payload;
     next();
   } catch (err) {
-    handleError(err, res);
+    handleCatchError(err, res);
   }
 };

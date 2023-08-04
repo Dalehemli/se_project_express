@@ -25,7 +25,9 @@ const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
 
   if (!password) {
-    return res.status(400).send({ error: "Password is required" });
+    return res
+      .status(ERROR_CODES.BadRequest)
+      .send({ error: "Password is required" });
   }
 
   bcrypt.hash(password, 10).then((hash) => {
