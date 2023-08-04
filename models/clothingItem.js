@@ -4,7 +4,7 @@ const validator = require("validator");
 const clothingItem = new mongoose.Schema({
   name: {
     type: String,
-    minlenth: 2,
+    minlength: 2,
     maxlength: 30,
     required: true,
   },
