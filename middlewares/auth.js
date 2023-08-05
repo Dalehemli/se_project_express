@@ -1,5 +1,6 @@
-const { handleError, ERROR_CODES } = require("../utils/errors");
 const jwt = require("jsonwebtoken");
+const { handleCatchError, ERROR_CODES } = require("../utils/errors");
+
 const { JWT_SECRET } = require("../utils/config");
 
 module.exports = (req, res, next) => {
