@@ -1,19 +1,17 @@
 const ClothingItem = require("../models/clothingItem");
 const {
   ERROR_CODES,
-  handleFailError,
   handleCatchError,
+  handleFailError,
 } = require("../utils/errors");
 
 const createItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
 
   ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
-    .then((item) => {
-      res.send({ data: item });
-    })
+    .then((item) => res.send({ data: item }))
     .catch((err) => {
-      handleCatchError(err, res);
+      handleCatchError(req, res, err);
     });
 };
 
@@ -21,57 +19,43 @@ const getItems = (req, res) => {
   ClothingItem.find({})
     .then((items) => res.send(items))
     .catch((err) => {
-      handleCatchError(err, res);
+      handleCatchError(req, res, err);
     });
 };
 
-// const deleteItem = (req, res) => {
-//   ClothingItem.findById(req.params.itemId)
-//     .then((item) => {
-//       if (!item) {
-//         handleFailError("Item ID not found", 404);
-//       }
-//       if (String(item.owner) !== req.user._id) {
-//         return res
-//           .status(ERROR_CODES.Forbidden)
-//           .send({ message: "You are not authorized to delete this item" });
-//       }
-//       return item.deleteOne().then(() => {
-//         res.send({ message: "Item deleted" });
-//       });
-//     })
-//     .catch((err) => {
-//       if (err.statusCode === 404) {
-//         res.status(ERROR_CODES.NotFound).send({ message: "Item not found" });
-//       } else if (err.name === "CastError") {
-//         res
-//           .status(ERROR_CODES.BadRequest)
-//           .send({ message: "Bad Request and/or invalid input" });
-//       } else {
-//         res
-//           .status(ERROR_CODES.DefaultError)
-//           .send({ message: "Something went wrong" });
-//       }
-//     });
-// };
-
 const deleteItem = (req, res) => {
-  ClothingItem.findById(req.params.itemId)
+  const { itemId } = req.params;
+
+  ClothingItem.findByIdAndDelete(itemId)
+    .orFail(() => {
+      const error = new Error("Item ID was not found");
+      error.statusCode = 404;
+      throw error;
+    })
     .then((item) => {
-      if (!item) {
-        handleFailError("Item ID not found", ERROR_CODES.NotFound);
-      }
       if (String(item.owner) !== req.user._id) {
-        return res
-          .status(ERROR_CODES.Forbidden)
-          .send({ message: "You are not authorized to delete this item" });
+        res.status(ERROR_CODES.Forbidden).send({
+          message: "You do not have the authorization to delete this item",
+        });
+      } else {
+        res
+          .status(200)
+          .send({ message: `The item has been successfully deleted.` });
       }
-      return item.deleteOne().then(() => {
-        res.send({ message: "Item deleted" });
-      });
+      return null; // Return a value to satisfy consistent-return rule
     })
     .catch((err) => {
-      handleCatchError(err, res);
+      if (err.statusCode === 404) {
+        res.status(ERROR_CODES.NotFound).send({ message: "Item not found" });
+      } else if (err.name === "CastError") {
+        res
+          .status(ERROR_CODES.BadRequest)
+          .send({ message: "Bad Request and/or invalid input" });
+      } else {
+        res
+          .status(ERROR_CODES.DefaultError)
+          .send({ message: "Something went wrong" });
+      }
     });
 };
 
@@ -82,30 +66,59 @@ const likeItem = (req, res) => {
     { new: true },
   )
     .orFail(() => {
-      handleFailError();
+      const error = new Error("Item ID was not found");
+      error.statusCode = 404;
+      throw error;
     })
-    .then(() => res.status(200).send({ message: "Item has been liked" }))
+    .then(() => {
+      res.status(200).send({ message: "Item has been successfully liked" });
+    })
     .catch((err) => {
-      handleCatchError(err, res);
+      handleFailError(req, res, err);
     });
 };
 
-function dislikeItem(req, res) {
+const dislikeItem = (req, res) => {
   ClothingItem.findByIdAndUpdate(
     req.params.itemId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
+    .orFail(() => {
+      const error = new Error("Item ID was not found");
+      error.statusCode = 404;
+      throw error;
+    })
     .then((item) => {
-      if (!item) {
-        handleFailError("Item ID not found", ERROR_CODES.NotFound);
-      }
       res.status(200).send({ data: item });
     })
     .catch((err) => {
-      handleCatchError(err, res);
+      console.error(err);
+      handleFailError(req, res, err);
     });
-}
+};
+
+const updateItem = (req, res) => {
+  const { itemId } = req.params;
+  const { imageUrl } = req.body;
+
+  ClothingItem.findOneAndUpdate(
+    { _id: itemId },
+    { $set: { imageUrl } },
+    { new: true },
+  )
+    .orFail(() => {
+      const error = new Error("Item ID was not found");
+      error.statusCode = 404;
+      throw error;
+    })
+    .then((item) => {
+      res.status(200).send({ data: item });
+    })
+    .catch((err) => {
+      handleCatchError(req, res, err);
+    });
+};
 
 module.exports = {
   createItem,
@@ -113,4 +126,5 @@ module.exports = {
   deleteItem,
   likeItem,
   dislikeItem,
+  updateItem,
 };
