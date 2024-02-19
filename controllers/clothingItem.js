@@ -70,8 +70,8 @@ const likeItem = (req, res) => {
       error.statusCode = 404;
       throw error;
     })
-    .then(() => {
-      res.status(200).send({ message: "Item has been successfully liked" });
+    .then((updatedItem) => {
+      res.status(200).json(updatedItem); // Send back the updated item
     })
     .catch((err) => {
       handleFailError(req, res, err);
