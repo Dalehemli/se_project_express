@@ -71,7 +71,7 @@ const likeItem = (req, res) => {
       throw error;
     })
     .then((updatedItem) => {
-      res.status(200).json(updatedItem); // Send back the updated item
+      res.status(200).json(updatedItem);
     })
     .catch((err) => {
       handleFailError(req, res, err);
