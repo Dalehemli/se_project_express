@@ -2,32 +2,32 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/users");
 const {
-  handleFailError,
+  BadRequestError,
+  UnauthorizedError,
+  NotFoundError,
   handleCatchError,
   ERROR_CODES,
 } = require("../utils/errors");
 const { JWT_SECRET } = require("../utils/config");
 
-const getCurrentUser = (req, res) => {
+const getCurrentUser = (req, res, next) => {
   const { _id } = req.user;
 
   User.findById(_id)
     .orFail(() => {
-      handleFailError();
+      throw new NotFoundError("User not found");
     })
     .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
-      handleCatchError(err, res);
+      next(err);
     });
 };
 
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   const { name, avatar, email, password } = req.body;
 
   if (!password) {
-    return res
-      .status(ERROR_CODES.BadRequest)
-      .send({ error: "Password is required" });
+    return next(new BadRequestError("Password is required"));
   }
 
   bcrypt.hash(password, 10).then((hash) => {
@@ -37,12 +37,11 @@ const createUser = (req, res) => {
         delete userData.password;
         return res.status(201).send({ data: userData });
       })
-      .catch((err) => handleCatchError(err, res));
+      .catch((err) => next(err));
   });
-  return undefined;
 };
 
-const updateUser = (req, res) => {
+const updateUser = (req, res, next) => {
   const { name, avatar } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -50,32 +49,31 @@ const updateUser = (req, res) => {
     { new: true, runValidators: true },
   )
     .orFail(() => {
-      handleFailError();
+      next(new NotFoundError("User not found"));
     })
     .then((user) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      handleCatchError(err, res);
+      next(err);
     });
 };
 
-const login = (req, res) => {
+const login = (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res
-      .status(ERROR_CODES.Unauthorized)
-      .send({ message: "You are not authorized to do this" });
+    return next(new UnauthorizedError("Email and password are required"));
   }
-  return User.findUserByCredentials(email, password)
+
+  User.findUserByCredentials(email, password)
     .then((user) => {
       res.send({
         token: jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" }),
       });
     })
     .catch((err) => {
-      handleCatchError(err, res);
+      next(err);
     });
 };
 

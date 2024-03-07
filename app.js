@@ -1,26 +1,7 @@
-// const express = require("express");
-// const cors = require("cors");
-
-// const mongoose = require("mongoose");
-
-// const { PORT = 3001 } = process.env;
-
-// const app = express();
-
-// app.use(cors());
-
-// mongoose.connect("mongodb://127.0.0.1:27017/wtwr_db");
-
-// const routes = require("./routes");
-
-// app.use(express.json());
-
-// app.use(routes);
-
-// app.listen(PORT);
-
 const express = require("express");
 const cors = require("cors");
+const { errors } = require("cors");
+const { requestLogger, errorLogger } = require("./middlewares/logger");
 
 const { PORT = 3001 } = process.env;
 
@@ -35,7 +16,11 @@ const routes = require("./routes");
 
 app.use(express.json());
 app.use(cors());
+app.use(requestLogger);
 app.use(routes);
+app.use(errorLogger);
+// app.use(errors());
+// app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`App is listening at port ${PORT}`);

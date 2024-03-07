@@ -1,104 +1,81 @@
 const ClothingItem = require("../models/clothingItem");
 const {
-  ERROR_CODES,
-  handleCatchError,
-  handleFailError,
+  BadRequestError,
+  NotFoundError,
+  ForbiddenError,
 } = require("../utils/errors");
 
-const createItem = (req, res) => {
+const createItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
 
   ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
     .then((item) => res.send({ data: item }))
     .catch((err) => {
-      handleCatchError(req, res, err);
+      if (err.name === "ValidationError") {
+        next(new BadRequestError(err.message));
+      } else {
+        next(err); // Pass other errors to the error handling middleware
+      }
     });
 };
 
-const getItems = (req, res) => {
+const getItems = (req, res, next) => {
   ClothingItem.find({})
     .then((items) => res.send(items))
-    .catch((err) => {
-      handleCatchError(req, res, err);
-    });
+    .catch((err) => next(err)); // Pass errors to the error handling middleware
 };
 
-const deleteItem = (req, res) => {
+const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
 
   ClothingItem.findByIdAndDelete(itemId)
-    .orFail(() => {
-      const error = new Error("Item ID was not found");
-      error.statusCode = 404;
-      throw error;
-    })
     .then((item) => {
+      if (!item) {
+        throw new NotFoundError("Item not found");
+      }
       if (String(item.owner) !== req.user._id) {
-        res.status(ERROR_CODES.Forbidden).send({
-          message: "You do not have the authorization to delete this item",
-        });
-      } else {
-        res
-          .status(200)
-          .send({ message: `The item has been successfully deleted.` });
+        throw new ForbiddenError(
+          "You do not have permission to delete this item",
+        );
       }
-      return null; // Return a value to satisfy consistent-return rule
+      res
+        .status(200)
+        .send({ message: `The item has been successfully deleted.` });
     })
-    .catch((err) => {
-      if (err.statusCode === 404) {
-        res.status(ERROR_CODES.NotFound).send({ message: "Item not found" });
-      } else if (err.name === "CastError") {
-        res
-          .status(ERROR_CODES.BadRequest)
-          .send({ message: "Bad Request and/or invalid input" });
-      } else {
-        res
-          .status(ERROR_CODES.DefaultError)
-          .send({ message: "Something went wrong" });
-      }
-    });
+    .catch((err) => next(err)); // Pass errors to the error handling middleware
 };
 
-const likeItem = (req, res) => {
+const likeItem = (req, res, next) => {
   ClothingItem.findByIdAndUpdate(
     req.params.itemId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(() => {
-      const error = new Error("Item ID was not found");
-      error.statusCode = 404;
-      throw error;
-    })
     .then((updatedItem) => {
+      if (!updatedItem) {
+        throw new NotFoundError("Item not found");
+      }
       res.status(200).json(updatedItem);
     })
-    .catch((err) => {
-      handleFailError(req, res, err);
-    });
+    .catch((err) => next(err)); // Pass errors to the error handling middleware
 };
 
-const dislikeItem = (req, res) => {
+const dislikeItem = (req, res, next) => {
   ClothingItem.findByIdAndUpdate(
     req.params.itemId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(() => {
-      const error = new Error("Item ID was not found");
-      error.statusCode = 404;
-      throw error;
-    })
     .then((item) => {
+      if (!item) {
+        throw new NotFoundError("Item not found");
+      }
       res.status(200).send({ data: item });
     })
-    .catch((err) => {
-      console.error(err);
-      handleFailError(req, res, err);
-    });
+    .catch((err) => next(err)); // Pass errors to the error handling middleware
 };
 
-const updateItem = (req, res) => {
+const updateItem = (req, res, next) => {
   const { itemId } = req.params;
   const { imageUrl } = req.body;
 
@@ -107,17 +84,13 @@ const updateItem = (req, res) => {
     { $set: { imageUrl } },
     { new: true },
   )
-    .orFail(() => {
-      const error = new Error("Item ID was not found");
-      error.statusCode = 404;
-      throw error;
-    })
     .then((item) => {
+      if (!item) {
+        throw new NotFoundError("Item not found");
+      }
       res.status(200).send({ data: item });
     })
-    .catch((err) => {
-      handleCatchError(req, res, err);
-    });
+    .catch((err) => next(err)); // Pass errors to the error handling middleware
 };
 
 module.exports = {
