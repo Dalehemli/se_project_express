@@ -1,11 +1,15 @@
+require("dotenv").config();
+
 const express = require("express");
+const mongoose = require("mongoose");
 const cors = require("cors");
-const { errors } = require("cors");
+const { errors } = require("celebrate");
 const { requestLogger, errorLogger } = require("./middlewares/logger");
+const errorHandler = require("./middlewares/error-handler");
 
 const { PORT = 3001 } = process.env;
 
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
 
 mongoose.set("strictQuery", false);
 
@@ -23,12 +27,12 @@ app.get("/crash-test", () => {
     throw new Error("Server will crash now");
   }, 0);
 });
-//sorry if this is a mess, I'm sort of lost. Thanks for any help in advance...
+
 app.use(routes);
 app.use(errorLogger);
 app.use(errors());
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`App is listening at port ${PORT}`);
+  // console.log(`App is listening at port ${PORT}`);
 });

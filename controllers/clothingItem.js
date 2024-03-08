@@ -14,7 +14,7 @@ const createItem = (req, res, next) => {
       if (err.name === "ValidationError") {
         next(new BadRequestError(err.message));
       } else {
-        next(err); // Pass other errors to the error handling middleware
+        next(err);
       }
     });
 };
@@ -22,13 +22,14 @@ const createItem = (req, res, next) => {
 const getItems = (req, res, next) => {
   ClothingItem.find({})
     .then((items) => res.send(items))
-    .catch((err) => next(err)); // Pass errors to the error handling middleware
+    .catch((err) => next(err));
 };
 
 const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
 
-  ClothingItem.findByIdAndDelete(itemId)
+  clothingItem
+    .findById(itemId)
     .then((item) => {
       if (!item) {
         throw new NotFoundError("Item not found");
@@ -38,11 +39,13 @@ const deleteItem = (req, res, next) => {
           "You do not have permission to delete this item",
         );
       }
-      res
-        .status(200)
-        .send({ message: `The item has been successfully deleted.` });
+      item.deleteOne().then(() => {
+        res
+          .status(200)
+          .send({ message: `The item has been successfully deleted.` });
+      });
     })
-    .catch((err) => next(err)); // Pass errors to the error handling middleware
+    .catch((err) => next(err));
 };
 
 const likeItem = (req, res, next) => {
@@ -57,7 +60,7 @@ const likeItem = (req, res, next) => {
       }
       res.status(200).json(updatedItem);
     })
-    .catch((err) => next(err)); // Pass errors to the error handling middleware
+    .catch((err) => next(err));
 };
 
 const dislikeItem = (req, res, next) => {
@@ -72,26 +75,26 @@ const dislikeItem = (req, res, next) => {
       }
       res.status(200).send({ data: item });
     })
-    .catch((err) => next(err)); // Pass errors to the error handling middleware
+    .catch((err) => next(err));
 };
 
-const updateItem = (req, res, next) => {
-  const { itemId } = req.params;
-  const { imageUrl } = req.body;
+// const updateItem = (req, res, next) => {
+//   const { itemId } = req.params;
+//   const { imageUrl } = req.body;
 
-  ClothingItem.findOneAndUpdate(
-    { _id: itemId },
-    { $set: { imageUrl } },
-    { new: true },
-  )
-    .then((item) => {
-      if (!item) {
-        throw new NotFoundError("Item not found");
-      }
-      res.status(200).send({ data: item });
-    })
-    .catch((err) => next(err)); // Pass errors to the error handling middleware
-};
+//   ClothingItem.findOneAndUpdate(
+//     { _id: itemId },
+//     { $set: { imageUrl } },
+//     { new: true },
+//   )
+//     .then((item) => {
+//       if (!item) {
+//         throw new NotFoundError("Item not found");
+//       }
+//       res.status(200).send({ data: item });
+//     })
+//     .catch((err) => next(err));
+// };
 
 module.exports = {
   createItem,
@@ -99,5 +102,5 @@ module.exports = {
   deleteItem,
   likeItem,
   dislikeItem,
-  updateItem,
+  // updateItem,
 };

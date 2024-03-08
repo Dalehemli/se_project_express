@@ -14,3 +14,9 @@ MongoDB - NoSQL database used to store relevant information.
 Mongoose - An Object Data Modeling library for MongoDB.
 Error Handling - Error handling techniques to handle various error types.
 Deployment - Application can be deployed on a remote server, allowing users to acces the app from anywhere.
+
+# Domains
+
+www.wtwrdenim.crabdance.com
+wtwrdenim.crabdance.com
+api.wtwrdenim.crabdance.com

@@ -8,10 +8,7 @@ module.exports = (req, res, next) => {
     const { authorization } = req.headers;
 
     if (!authorization || !authorization.startsWith("Bearer ")) {
-      res
-        .status(ERROR_CODES.Unauthorized)
-        .send({ message: "Authorization required" });
-      return;
+      throw new Error("Authorization required");
     }
 
     const token = authorization.replace("Bearer ", "");
@@ -20,14 +17,11 @@ module.exports = (req, res, next) => {
     try {
       payload = jwt.verify(token, JWT_SECRET);
     } catch (err) {
-      res
-        .status(ERROR_CODES.Unauthorized)
-        .send({ message: "Authorization required" });
-      return;
+      throw new Error("Authorization required");
     }
     req.user = payload;
     next();
   } catch (err) {
-    handleCatchError(err, res);
+    next(err);
   }
 };

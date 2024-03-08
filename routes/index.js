@@ -1,32 +1,17 @@
-// const router = require("express").Router();
-// const clothingItem = require("./clothingItem");
-// const User = require("./users");
-// const { ERROR_404 } = require("../utils/errors");
-
-// router.use("/items", clothingItem);
-// router.use("/users", User);
-
-// router.use((req, res) => {
-//   res.status(ERROR_404).send({ message: "Request resource was not found" });
-// });
-
-// module.exports = router;
-
 const router = require("express").Router();
 const clothingItem = require("./clothingItem");
 const User = require("./users");
 const { createUser, login } = require("../controllers/users");
-const { ERROR_CODES } = require("../utils/errors");
+const NotFoundError = require("../utils/errors/NotFoundError");
+const { validateAuthentication } = require("../middlewares/validation");
 
-router.post("/signup", createUser);
-router.post("/signin", login);
+router.post("/signup", validateAuthentication, createUser);
+router.post("/signin", validateAuthentication, login);
 router.use("/items", clothingItem);
 router.use("/users", User);
 
-router.use((req, res) => {
-  res.status(ERROR_CODES.NotFound).send({
-    message: "Request resource was not found",
-  });
+router.use((req, res, next) => {
+  next(new NotFoundError("Request resource was not found"));
 });
 
 module.exports = router;

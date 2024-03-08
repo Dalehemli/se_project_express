@@ -5,8 +5,6 @@ const {
   BadRequestError,
   UnauthorizedError,
   NotFoundError,
-  handleCatchError,
-  ERROR_CODES,
 } = require("../utils/errors");
 const { JWT_SECRET } = require("../utils/config");
 
@@ -37,7 +35,15 @@ const createUser = (req, res, next) => {
         delete userData.password;
         return res.status(201).send({ data: userData });
       })
-      .catch((err) => next(err));
+      .catch((err) => {
+        if (err.code === 11000) {
+          return next(new ConflictError("Duplicate email"));
+        } else if (err.name === "ValidationError") {
+          return next(new BadRequestError("Invalid data"));
+        } else {
+          return next(err);
+        }
+      });
   });
 };
 
@@ -55,7 +61,11 @@ const updateUser = (req, res, next) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      next(err);
+      if (err.name === "ValidationError") {
+        return next(new BadRequestError("Invalid data"));
+      } else {
+        return next(err);
+      }
     });
 };
 
