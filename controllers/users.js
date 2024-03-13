@@ -1,12 +1,10 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/users");
-const {
-  BadRequestError,
-  UnauthorizedError,
-  NotFoundError,
-  ConflictError,
-} = require("../utils/errors");
+const NotFoundError = require("../utils/errors/NotFoundError");
+const BadRequestError = require("../utils/errors/BadRequestError");
+const ConflictError = require("../utils/errors/ConflictError");
+const UnauthorizedError = require("../utils/errors/UnauthorizedError");
 const { JWT_SECRET } = require("../utils/config");
 
 const getCurrentUser = (req, res, next) => {
@@ -17,9 +15,7 @@ const getCurrentUser = (req, res, next) => {
       throw new NotFoundError("User not found");
     })
     .then((user) => res.status(200).send({ data: user }))
-    .catch((err) => {
-      next(err);
-    });
+    .catch(next);
 };
 
 const createUser = (req, res, next) => {
@@ -39,11 +35,11 @@ const createUser = (req, res, next) => {
       .catch((err) => {
         if (err.code === 11000) {
           return next(new ConflictError("Duplicate email"));
-        } else if (err.name === "ValidationError") {
-          return next(new BadRequestError("Invalid data"));
-        } else {
-          return next(err);
         }
+        if (err.name === "ValidationError") {
+          return next(new BadRequestError("Invalid data"));
+        }
+        return next(err);
       });
   });
 };
@@ -64,9 +60,8 @@ const updateUser = (req, res, next) => {
     .catch((err) => {
       if (err.name === "ValidationError") {
         return next(new BadRequestError("Invalid data"));
-      } else {
-        return next(err);
       }
+      return next(err);
     });
 };
 
@@ -83,9 +78,7 @@ const login = (req, res, next) => {
         token: jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" }),
       });
     })
-    .catch((err) => {
-      next(err);
-    });
+    .catch(next);
 };
 
 module.exports = {

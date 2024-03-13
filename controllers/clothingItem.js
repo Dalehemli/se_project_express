@@ -26,8 +26,7 @@ const getItems = (req, res, next) => {
 const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
 
-  clothingItem
-    .findById(itemId)
+  ClothingItem.findById(itemId)
     .then((item) => {
       if (!item) {
         throw new NotFoundError("Item not found");
