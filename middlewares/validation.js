@@ -22,9 +22,6 @@ const validateUpdateUser = celebrate({
   }),
 });
 
-//I think this is what you were asking for with the validation functions for name and avatar?
-//Also, I just have to figure out the server configuration and where I went wrong. Just wanted to make sure got the corrections done
-
 const validateCreatedItem = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30).messages({
