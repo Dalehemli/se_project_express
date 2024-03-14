@@ -54,7 +54,7 @@ const updateUser = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError("User not found");
     })
-    .then((user) => res.status(200).send(user))
+    .then((user) => res.status(200).send({ data: user }))
     .catch((err) => {
       if (err.name === "ValidationError") {
         return next(new BadRequestError("Invalid data"));
